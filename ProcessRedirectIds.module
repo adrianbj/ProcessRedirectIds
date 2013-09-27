@@ -1,0 +1,46 @@
+<?php
+
+class ProcessRedirectIds extends Process {
+
+	public static function getModuleInfo() {
+		return array(
+			'title' => 'Redirect ID based URLs',
+			'summary' => 'Redirects ID based URL to full SEO friendly URL',
+			'href' => '',
+			'version' => 1,
+			'permanent' => false,
+			'autoload' => true,
+			'singular' => true,
+		);
+	}
+
+	public function init() {
+		parent::init();
+		$this->addHook('ProcessPageView::pageNotFound', $this, 'redirectIds');
+	}
+
+
+	public function redirectIds($event) {
+
+		// determine the URL that wasn't found
+		$url = $_SERVER['REQUEST_URI'];
+
+		// if installed in a subdirectory, make $url relative to the directory ProcessWire is installed in
+		if($this->config->urls->root != '/') {
+			$url = substr($url, strlen($this->config->urls->root)-1);
+		}
+
+		foreach(explode('/', $url) as $part){
+			if(is_numeric($part)) $id = $part;
+		}
+
+		// if there is a page match, then redirect to it
+		$p = $this->pages->get($id);
+
+		if($p && $p->parent->id != 2 && $p->viewable()){
+			$this->session->redirect($p->path);
+		}
+
+	}
+
+}
