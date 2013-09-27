@@ -15,6 +15,6 @@ http://www.mysite.com/1058/this-is-the-fancy-title
 
 http://www.mysite.com/category1/category2/1058/any-text/
 
-Any of those will redirect to the proper URL, eg: http:www.mysite.com/this-is-the-fancy-title/
+Any of those will redirect to the proper URL, eg: http://www.mysite.com/this-is-the-fancy-title/
 
 
