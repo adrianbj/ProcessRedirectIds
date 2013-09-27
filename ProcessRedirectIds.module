@@ -6,7 +6,7 @@ class ProcessRedirectIds extends Process {
 		return array(
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
-			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
+			'href' => '',
 			'version' => 1,
 			'permanent' => false,
 			'autoload' => true,
@@ -34,11 +34,15 @@ class ProcessRedirectIds extends Process {
 			if(is_numeric($part)) $id = $part;
 		}
 
-		// if there is a page match, then redirect to it
-		$p = $this->pages->get($id);
+		// if there is an ID in the URL
+		if(isset($id) && $id!=''){
 
-		if($p && $p->parent->id != 2 && $p->viewable()){
-			$this->session->redirect($p->path);
+			$p = $this->pages->get($id);
+
+			// if there is a page match, then redirect to it
+			if($p && $p->parent->id != 2 && $p->viewable()){
+				$this->session->redirect($p->path);
+			}
 		}
 
 	}
