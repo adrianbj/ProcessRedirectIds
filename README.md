@@ -17,6 +17,7 @@ http://www.mysite.com/category1/category2/1058/any-text/
 
 Any of those will redirect to the proper URL, eg: http://www.mysite.com/this-is-the-fancy-title/
 
-##Forum: http://processwire.com/talk/topic/4611-redirect-id-based-urls/
+##Forum: 
+http://processwire.com/talk/topic/4611-redirect-id-based-urls/
 
 
