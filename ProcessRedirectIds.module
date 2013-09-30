@@ -22,7 +22,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 5,
+			'version' => 6,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -73,7 +73,13 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 		// hook only if
 		// 1) no templates have been chosen (=all enabled) OR
 		// 2) the template of the edited page has been chosen
-		if(count($this->enabledTemplates) == 0 || in_array($this->editedPage->template->name, $this->enabledTemplates)) {
+
+		foreach(explode("|",$this->editedPage->parents) as $parent){
+			$parentEnabled = in_array($parent, $this->data['enabledPages']) ? true : false;
+		}
+
+		if((count($this->data['enabledTemplates']) == 0 || in_array($this->editedPage->template->name, $this->data['enabledTemplates'])) &&
+		(count($this->data['enabledPages']) == 0 || in_array($this->editedPage->id, $this->data['enabledPages'])) || $parentEnabled) {
 			$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'addShortURLLinks');
 		}
 	}
@@ -100,9 +106,14 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 
 			$p = $this->pages->get($id);
 
+			foreach(explode("|",$p->parents) as $parent){
+				$parentEnabled = in_array($parent, $this->data['enabledPages']) ? true : false;
+			}
+
 			// if there is a page match, then redirect to it
 			if($p && $p->parent->id != 2 && $p->viewable()){
-				if(count($this->data['enabledTemplates']) == 0 || in_array($p->template->name, $this->data['enabledTemplates'])) {
+				if((count($this->data['enabledTemplates']) == 0 || in_array($p->template->name, $this->data['enabledTemplates'])) &&
+				(count($this->data['enabledPages']) == 0 || in_array($p->id, $this->data['enabledPages'])) || $parentEnabled) {
 					$this->session->redirect($p->path);
 				}
 			}
@@ -170,20 +181,15 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 
 
 
-		/*$fieldEnabledPages = wire('modules')->get('InputfieldAsmSelect');
+		$fieldEnabledPages = wire('modules')->get('InputfieldPageListSelectMultiple');
 		$fieldEnabledPages->attr('name+id', 'enabledPages');
 		$fieldEnabledPages->label = __('Enabled pages', __FILE__);
 		$fieldEnabledPages->description = __('ID based shortlinks will only work for the selected pages and their children. If no template is chosen, the links will work for all pages, except admin and other pages that are not viewable to the user.', __FILE__);
 		$fieldEnabledPages->attr('title', __('Enable page', __FILE__));
-		$fieldEnabledPages->setAsmSelectOption('sortable', false);
 
-		// populate with all available templates
-		foreach(wire("pages")->find("sort=sort") as $p) {
-			$fieldEnabledPages->addOption($p->name);
-		}
 		if(isset($data['enabledPages'])) $fieldEnabledPages->value = $data['enabledPages'];
 
-		$wrapper->add($fieldEnabledPages);*/
+		$wrapper->add($fieldEnabledPages);
 
 
 		return $wrapper;
