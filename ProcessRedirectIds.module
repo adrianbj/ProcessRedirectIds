@@ -15,23 +15,67 @@
  *
  */
 
-class ProcessRedirectIds extends Process {
+class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 
 	public static function getModuleInfo() {
 		return array(
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
-			'href' => '',
-			'version' => 2,
+			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
+			'version' => 3,
 			'permanent' => false,
 			'autoload' => true,
-			'singular' => true,
+			'singular' => true
 		);
 	}
 
+
+    /**
+     * Data as used by the get/set functions
+     *
+     */
+    protected $data = array();
+
+
+	/**
+	 * __construct() is the right place to init config vars before they'll get populated
+	 *
+	 */
+	public function __construct() {
+		$this->enabledTemplates = array();
+	}
+
+
 	public function init() {
-		parent::init();
+
+		//parent::init();
 		$this->addHook('ProcessPageView::pageNotFound', $this, 'redirectIds');
+	}
+
+
+	public function ready() {
+
+		// we're interested in page editor only
+		if(wire('page')->process != 'ProcessPageEdit') return;
+
+		// skip changing templates (only target the actual edit form)
+		$id = (int)$this->input->get('id');
+		if(!$id) return;
+
+		// wire('page') would be the page with ProcessPageEdit
+		// GET parameter id tells the page that's being edited
+		$this->editedPage = wire('pages')->get($id);
+
+
+		// don't even consider system templates
+		if($this->editedPage->template->flags & Template::flagSystem) return;
+
+		// hook only if
+		// 1) no templates have been chosen (=all enabled) OR
+		// 2) the template of the edited page has been chosen
+		if(count($this->enabledTemplates) == 0 || in_array($this->editedPage->template->name, $this->enabledTemplates)) {
+			$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'addShortURLLinks');
+		}
 	}
 
 
@@ -46,7 +90,7 @@ class ProcessRedirectIds extends Process {
 		}
 
 		foreach(explode('/', $url) as $part){
-			if(is_numeric($part)) $id = $part;
+			if(is_numeric($part)) $id = (int) $part;
 		}
 
 		// if there is an ID in the URL
@@ -56,10 +100,91 @@ class ProcessRedirectIds extends Process {
 
 			// if there is a page match, then redirect to it
 			if($p && $p->parent->id != 2 && $p->viewable()){
-				$this->session->redirect($p->path);
+				if(count($this->data['enabledTemplates']) == 0 || in_array($p->template->name, $this->data['enabledTemplates'])) {
+					$this->session->redirect($p->path);
+				}
 			}
 		}
 
 	}
+
+	public function addShortURLLinks(HookEvent $event){
+		$current_page = $this->pages->get((int) $this->input->get->id);
+
+		$form = $event->return;
+
+		$shortlinks = '';
+
+		// create the tab
+		$refTab = new InputfieldWrapper();
+		$refTab->attr('id', $this->className() . 'ShortLinks');
+		$refTab->attr('title', $this->_('ShortLinks'));
+
+		// construct contents inside a container
+		$field = $this->modules->get("InputfieldMarkup");
+		$field->label = $this->_("List of example shortlinks that can be used to access this page");
+		$field->description = $this->_("You can define any URL you want, so long as the page ID (eg. {$current_page->id}) is in the URL and is the only segment in the URL that is a number.");
+		$field->notes = $this->_("The last example is longer than the default title and therefore might seem strange, but its advantage is that if the page is ever renamed, or moved to different parents, this link will still work. In other words, this is a permalink.");
+
+		$shortlinks .= "<p>http://{$_SERVER['HTTP_HOST']}/{$current_page->id}/</p>";
+		$shortlinks .= "<p>http://{$_SERVER['HTTP_HOST']}{$current_page->parent->path}{$current_page->id}/</p>";
+		$shortlinks .= "<p>http://{$_SERVER['HTTP_HOST']}/{$current_page->id}{$current_page->path}</p>";
+
+		$field->value = $shortlinks;
+
+		// append the markup to the tab and the tab to the form
+		$refTab->append($field);
+		$form->append($refTab);
+
+	}
+
+
+	/**
+	 * Return an InputfieldsWrapper of Inputfields used to configure the class
+	 *
+	 * @param array $data Array of config values indexed by field name
+	 * @return InputfieldsWrapper
+	 *
+	 */
+	public static function getModuleConfigInputfields(array $data) {
+		$wrapper = new InputFieldWrapper();
+
+		$fieldEnabledTemplates = wire('modules')->get('InputfieldAsmSelect');
+		$fieldEnabledTemplates->attr('name+id', 'enabledTemplates');
+		$fieldEnabledTemplates->label = __('Enabled templates', __FILE__);
+		$fieldEnabledTemplates->description = __('ID based shortlinks will only work for the selected templates. If no template is chosen, the links will work for all templates.', __FILE__);
+		$fieldEnabledTemplates->attr('title', __('Enable template', __FILE__));
+		$fieldEnabledTemplates->setAsmSelectOption('sortable', false);
+
+		// populate with all available templates
+		foreach(wire('templates') as $t) {
+			// filter out system templates
+			if(!($t->flags & Template::flagSystem)) $fieldEnabledTemplates->addOption($t->name);
+		}
+		if(isset($data['enabledTemplates'])) $fieldEnabledTemplates->value = $data['enabledTemplates'];
+
+		$wrapper->add($fieldEnabledTemplates);
+
+
+
+		/*$fieldEnabledPages = wire('modules')->get('InputfieldAsmSelect');
+		$fieldEnabledPages->attr('name+id', 'enabledPages');
+		$fieldEnabledPages->label = __('Enabled pages', __FILE__);
+		$fieldEnabledPages->description = __('ID based shortlinks will only work for the selected pages and their children. If no template is chosen, the links will work for all pages, except admin and other pages that are not viewable to the user.', __FILE__);
+		$fieldEnabledPages->attr('title', __('Enable page', __FILE__));
+		$fieldEnabledPages->setAsmSelectOption('sortable', false);
+
+		// populate with all available templates
+		foreach(wire('pages') as $p) {
+			$fieldEnabledPages->addOption($p->name);
+		}
+		if(isset($data['enabledPages'])) $fieldEnabledPages->value = $data['enabledPages'];
+
+		$wrapper->add($fieldEnabledPages);*/
+
+
+		return $wrapper;
+	}
+
 
 }
