@@ -124,7 +124,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 		$field = $this->modules->get("InputfieldMarkup");
 		$field->label = $this->_("List of example shortlinks that can be used to access this page");
 		$field->description = $this->_("You can define any URL you want, so long as the page ID (eg. {$current_page->id}) is in the URL and is the only segment in the URL that is a number.");
-		$field->notes = $this->_("The last example is longer than the default title and therefore might seem strange, but its advantage is that if the page is ever renamed, or moved to different parents, this link will still work. In other words, this is a permalink.");
+		$field->notes = $this->_("The last example is longer than the default title and therefore might seem strange, but its advantage is that if the page is ever renamed, or moved to different parents, this link will still work.");
 
 		$shortlinks .= "<p><a href='http://{$_SERVER['HTTP_HOST']}/{$current_page->id}/' target='_blank'>http://{$_SERVER['HTTP_HOST']}/{$current_page->id}/</a></p>";
 		$shortlinks .= "<p><a href='http://{$_SERVER['HTTP_HOST']}{$current_page->parent->path}{$current_page->id}/' target='_blank'>http://{$_SERVER['HTTP_HOST']}{$current_page->parent->path}{$current_page->id}/</a></p>";
