@@ -22,7 +22,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 6,
+			'version' => 7,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -136,7 +136,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 		// construct contents inside a container
 		$field = $this->modules->get("InputfieldMarkup");
 		$field->label = $this->_("List of example shortlinks that can be used to access this page");
-		$field->description = $this->_("You can define any URL you want, so long as the page ID (eg. {$current_page->id}) is in the URL and is the only segment in the URL that is a number.");
+		$field->description = $this->_("You can define any URL you want, so long as the page ID (eg. {$current_page->id}) is in the URL somewhere.");
 		$field->notes = $this->_("The last two examples are longer than the default title and therefore might seem strange, but their advantage is that if the page is ever renamed, or moved to different parents, these links will still work, as will any of the other options listed here.");
 
 		$shortlinks .= "<p><a href='http://{$_SERVER['HTTP_HOST']}/{$current_page->id}/' target='_blank'>http://{$_SERVER['HTTP_HOST']}/{$current_page->id}/</a></p>";
