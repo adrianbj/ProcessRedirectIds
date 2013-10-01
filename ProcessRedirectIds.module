@@ -22,7 +22,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 10,
+			'version' => 11,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -43,12 +43,11 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 	 */
 	public function __construct() {
 		$this->enabledTemplates = array();
+		$this->enabledPages = array();
 	}
 
 
 	public function init() {
-
-		//parent::init();
 		$this->addHook('ProcessPageView::pageNotFound', $this, 'redirectIds');
 	}
 
@@ -161,6 +160,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 	 *
 	 */
 	public static function getModuleConfigInputfields(array $data) {
+
 		$wrapper = new InputFieldWrapper();
 
 		$fieldEnabledTemplates = wire('modules')->get('InputfieldAsmSelect');
@@ -194,6 +194,5 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 
 		return $wrapper;
 	}
-
 
 }
