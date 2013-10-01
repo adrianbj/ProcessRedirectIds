@@ -22,7 +22,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 11,
+			'version' => 12,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -166,7 +166,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 		$fieldEnabledTemplates = wire('modules')->get('InputfieldAsmSelect');
 		$fieldEnabledTemplates->attr('name+id', 'enabledTemplates');
 		$fieldEnabledTemplates->label = __('Enabled templates', __FILE__);
-		$fieldEnabledTemplates->description = __('ID based shortlinks will only work for the selected templates. If no template is chosen, the links will work for all templates.', __FILE__);
+		$fieldEnabledTemplates->description = __('ID based shortlinks will only work for the selected templates. If no templates are chosen, the links will work for all templates.', __FILE__);
 		$fieldEnabledTemplates->attr('title', __('Enable template', __FILE__));
 		$fieldEnabledTemplates->setAsmSelectOption('sortable', false);
 
@@ -184,7 +184,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 		$fieldEnabledPages = wire('modules')->get('InputfieldPageListSelectMultiple');
 		$fieldEnabledPages->attr('name+id', 'enabledPages');
 		$fieldEnabledPages->label = __('Enabled pages', __FILE__);
-		$fieldEnabledPages->description = __('ID based shortlinks will only work for the selected pages and their children. If no page is chosen, the links will work for all pages, except admin and other pages that are not viewable to the user.', __FILE__);
+		$fieldEnabledPages->description = __('ID based shortlinks will only work for the selected pages and their children. If no pages are chosen, the links will work for all pages, except admin and other pages that are not viewable to the user.', __FILE__);
 		$fieldEnabledPages->attr('title', __('Enable page', __FILE__));
 
 		if(isset($data['enabledPages'])) $fieldEnabledPages->value = $data['enabledPages'];
