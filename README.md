@@ -21,6 +21,8 @@ http://www.mysite.com/article/this-is-the-fancy-title-1058/
 
 Any of those will redirect to the proper URL, eg: http://www.mysite.com/this-is-the-fancy-title/
 
+There is a config option to simply load the content to the ID based URL, rather than redirecting to the original PW url if you prefer.
+
 ##Forum:
 http://processwire.com/talk/topic/4611-redirect-id-based-urls/
 

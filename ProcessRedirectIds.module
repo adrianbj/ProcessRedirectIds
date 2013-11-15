@@ -22,7 +22,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 15,
+			'version' => 16,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -37,14 +37,27 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
     protected $data = array();
 
 
-	/**
-	 * __construct() is the right place to init config vars before they'll get populated
-	 *
-	 */
-	public function __construct() {
-		$this->enabledTemplates = array();
-		$this->enabledPages = array();
-	}
+   /**
+     * Default configuration for module
+     *
+     */
+    static public function getDefaultData() {
+            return array(
+                "redirectType" => "Redirect",
+                "enabledFields" => "",
+                "enabledTemplates" => ""
+            );
+    }
+
+    /**
+     * Populate the default config data
+     *
+     */
+    public function __construct() {
+       foreach(self::getDefaultData() as $key => $value) {
+               $this->$key = $value;
+       }
+    }
 
 
 	public function init() {
@@ -71,7 +84,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 
 
 		// hook only if
-		// 1) no templates or pages have been chosen (=all enabled) OR
+		// 1) no templates or pages have been chosen (=all) OR
 		// 2) the template of the edited page has been chosen or the page or a parent page of the edited page has been chosen
 
 		if($this->editedPage->id != 1){
@@ -117,7 +130,15 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 
 				if((count($this->data['enabledTemplates']) == 0 || in_array($p->template->name, $this->data['enabledTemplates'])) &&
 				(count($this->data['enabledPages']) == 0 || in_array($p->id, $this->data['enabledPages'])) || $parentEnabled) {
-					$this->session->redirect($p->path);
+
+					if($this->data['redirectType']=='Load'){
+						echo $this->pages->get($p->path)->render();
+  						exit;
+					}
+					else{
+						$this->session->redirect($p->path);
+					}
+
 				}
 			}
 		}
@@ -164,13 +185,26 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 	 */
 	public static function getModuleConfigInputfields(array $data) {
 
+		$data = array_merge(self::getDefaultData(), $data);
+
 		$wrapper = new InputFieldWrapper();
+
+		$redirectType = wire('modules')->get('InputfieldSelect');
+		$redirectType->attr('name+id', 'redirectType');
+		$redirectType->label = __('Redirect Type', __FILE__);
+		$redirectType->description = __('The default is to redirect to the original PW url for the page, but if you prefer you can change this setting to "Load" to have it keep the ID based URL as entered and simply load the page content.', __FILE__);
+		$redirectType->addOption("Redirect");
+		$redirectType->addOption("Load");
+
+		if(isset($data['redirectType'])) $redirectType->value = $data['redirectType'];
+
+		$wrapper->add($redirectType);
+
 
 		$fieldEnabledTemplates = wire('modules')->get('InputfieldAsmSelect');
 		$fieldEnabledTemplates->attr('name+id', 'enabledTemplates');
 		$fieldEnabledTemplates->label = __('Enabled templates', __FILE__);
 		$fieldEnabledTemplates->description = __('ID based shortlinks will only work for the selected templates. If no templates are chosen, the links will work for all templates.', __FILE__);
-		$fieldEnabledTemplates->attr('title', __('Enable template', __FILE__));
 		$fieldEnabledTemplates->setAsmSelectOption('sortable', false);
 
 		// populate with all available templates
