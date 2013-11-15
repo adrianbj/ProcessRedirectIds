@@ -22,7 +22,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 16,
+			'version' => 17,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -132,7 +132,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 				(count($this->data['enabledPages']) == 0 || in_array($p->id, $this->data['enabledPages'])) || $parentEnabled) {
 
 					if($this->data['redirectType']=='Load'){
-						echo $this->pages->get($p->path)->render();
+						echo str_replace("<head>","<head>\n\n\t<link href='$p->httpUrl' rel='canonical' />",$this->pages->get($p->path)->render());
   						exit;
 					}
 					else{
