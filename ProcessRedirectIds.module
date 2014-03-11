@@ -22,7 +22,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 17,
+			'version' => 18,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -61,7 +61,7 @@ class ProcessRedirectIds extends Process implements Module, ConfigurableModule {
 
 
 	public function init() {
-		$this->addHook('ProcessPageView::pageNotFound', $this, 'redirectIds');
+		$this->addHook('ProcessPageView::pageNotFound', $this, 'redirectIds', array('priority'=>10));
 	}
 
 
