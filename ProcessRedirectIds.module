@@ -22,7 +22,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 20,
+			'version' => 21,
 			'permanent' => false,
 			'autoload' => true,
 			'singular' => true
@@ -136,7 +136,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 						$event->return = str_replace("<head>","<head>\n\n\t<link href='$p->httpUrl' rel='canonical' />",$this->pages->get($p->path)->render());
 					}
 					else{
-						$this->session->redirect($p->path);
+						$this->session->redirect($p->httpUrl);
 					}
 
 				}
@@ -162,10 +162,12 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 		$field->description = $this->_("You can define any URL you want, so long as the page ID ({$current_page->id}) is in the URL somewhere.");
 		$field->notes = $this->_("The last two examples are longer than the default title and therefore might seem strange, but their advantage is that if the page is ever renamed, or moved to different parents, these links will still work, as will any of the other options listed here.");
 
-		$shortlinks .= "<p><a href='http://{$_SERVER['HTTP_HOST']}/{$current_page->id}/' target='_blank'>http://{$_SERVER['HTTP_HOST']}/{$current_page->id}/</a></p>";
-		if($current_page->parent->id !=1) $shortlinks .= "<p><a href='http://{$_SERVER['HTTP_HOST']}{$current_page->parent->path}{$current_page->id}/' target='_blank'>http://{$_SERVER['HTTP_HOST']}{$current_page->parent->path}{$current_page->id}/</a></p>";
-		$shortlinks .= "<p><a href='http://{$_SERVER['HTTP_HOST']}/{$current_page->id}{$current_page->path}' target='_blank'>http://{$_SERVER['HTTP_HOST']}/{$current_page->id}{$current_page->path}</a></p>";
-		$shortlinks .= "<p><a href='http://{$_SERVER['HTTP_HOST']}".rtrim($current_page->path, '/')."-{$current_page->id}/' target='_blank'>http://{$_SERVER['HTTP_HOST']}".rtrim($current_page->path, '/')."-{$current_page->id}/</a></p>";
+		$baseUrl = "http://{$this->config->httpHost}{$this->config->urls->root}";
+
+		$shortlinks .= "<p><a href='{$baseUrl}{$current_page->id}/' target='_blank'>{$baseUrl}{$current_page->id}/</a></p>";
+		if($current_page->parent->id !=1) $shortlinks .= "<p><a href='".$baseUrl.ltrim($current_page->path, '/')."{$current_page->id}/' target='_blank'>".$baseUrl.ltrim($current_page->path, '/')."{$current_page->id}/</a></p>";
+		$shortlinks .= "<p><a href='{$baseUrl}{$current_page->id}{$current_page->path}' target='_blank'>{$baseUrl}{$current_page->id}{$current_page->path}</a></p>";
+		$shortlinks .= "<p><a href='".$baseUrl.trim($current_page->path, '/')."-{$current_page->id}/' target='_blank'>".$baseUrl.trim($current_page->path, '/')."-{$current_page->id}/</a></p>";
 
 		$field->value = $shortlinks;
 
