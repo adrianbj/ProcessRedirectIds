@@ -5,6 +5,8 @@ Processwire module for redirecting ID based URL to full SEO friendly URL
 
 Module that alllows you to link to pages with their page ID in the URL. The ID can be in any location in the URL.
 
+It also has an option to automatically rewrite links to defined custom format, so long as you include $page->id in the format.
+
 Will work for all user viewable pages by default, but can be limited to specific templates and pages/parents in the module config settings.
 
 A new ShortLinks tab is generated on the edit page providing example links that can be copied.

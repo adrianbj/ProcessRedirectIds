@@ -22,8 +22,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 21,
-			'permanent' => false,
+			'version' => 24,
 			'autoload' => true,
 			'singular' => true
 		);
@@ -45,7 +44,8 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
             return array(
                 "redirectType" => "Redirect",
                 "enabledFields" => "",
-                "enabledTemplates" => ""
+                "enabledTemplates" => "",
+                "rewriteLinks" => ""
             );
     }
 
@@ -57,10 +57,28 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
        foreach(self::getDefaultData() as $key => $value) {
                $this->$key = $value;
        }
+
+		// determine the URL that wasn't found
+		$url = $_SERVER['REQUEST_URI'];
+
+		// if installed in a subdirectory, make $url relative to the directory ProcessWire is installed in
+		if($this->config->urls->root != '/') {
+			$url = substr($url, strlen($this->config->urls->root)-1);
+		}
+		$url = str_replace("-","/", $url);
+		foreach(explode('/', $url) as $part){
+			$part = preg_replace("/[^0-9]/", "", $part);
+			if(is_numeric($part) && strlen($part)>=4) {
+				$this->id = (int) $part;
+				break;
+			}
+		}
+
     }
 
 
 	public function init() {
+		if($this->data['rewriteLinks'])	$this->addHookAfter('Page::path', $this, 'rewriteLinks');
 		$this->addHookAfter('ProcessPageView::pageNotFound', $this, 'redirectIds', array('priority'=>10000));
 	}
 
@@ -77,7 +95,6 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 		// wire('page') would be the page with ProcessPageEdit
 		// GET parameter id tells the page that's being edited
 		$this->editedPage = wire('pages')->get($id);
-
 
 		// don't even consider system templates
 		if($this->editedPage->template->flags & Template::flagSystem) return;
@@ -100,26 +117,22 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 	}
 
 
+	public function rewriteLinks(HookEvent $e) {
+
+		$page = $e->object;
+		if(!isset($this->id) || $page->id != $this->id){
+			if($page->id!=1 && $page->template != 'admin') {
+				$e->return = @eval('return "'.$this->data['rewriteFormat'].'";');
+			}
+		}
+	}
+
 	public function redirectIds($event) {
 
-		// determine the URL that wasn't found
-		$url = $_SERVER['REQUEST_URI'];
-
-		// if installed in a subdirectory, make $url relative to the directory ProcessWire is installed in
-		if($this->config->urls->root != '/') {
-			$url = substr($url, strlen($this->config->urls->root)-1);
-		}
-
-		foreach(explode('/', $url) as $part){
-			$part = preg_replace("/[^0-9]/", "", $part);
-			if(is_numeric($part)) $id = (int) $part;
-		}
-
-
 		// if there is an ID in the URL
-		if(isset($id) && $id!=''){
+		if(isset($this->id) && $this->id!=''){
 
-			$p = $this->pages->get($id);
+			$p = $this->pages->get($this->id);
 
 			// if there is a page match, then proceed to check if templates and pages configuration allows the redirect
 			if($p->id && $p->id >= 1000 && $p->parent->id != 2 && $p->viewable()){
@@ -131,9 +144,10 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 				if((count($this->data['enabledTemplates']) == 0 || in_array($p->template->name, $this->data['enabledTemplates'])) &&
 				(count($this->data['enabledPages']) == 0 || in_array($p->id, $this->data['enabledPages'])) || $parentEnabled) {
 
-					if($this->data['redirectType']=='Load'){
+					//1005 is the id of the default PW site-map page. Something about the recursive function in there causing out of memory errors when using the "Load" option.
+					if($this->data['redirectType']=='Load' && $p->id != 1005){
 						header("HTTP/1.1 200 OK");
-						$event->return = str_replace("<head>","<head>\n\n\t<link href='$p->httpUrl' rel='canonical' />",$this->pages->get($p->path)->render());
+						$event->return = str_replace("<head>", "<head>\n\n\t<link href='$p->httpUrl' rel='canonical' />", $p->render());
 					}
 					else{
 						$this->session->redirect($p->httpUrl);
@@ -144,7 +158,9 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 		}
 	}
 
+
 	public function addShortURLLinks(HookEvent $event){
+
 		$current_page = $this->pages->get((int) $this->input->get->id);
 
 		$form = $event->return;
@@ -185,9 +201,9 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 	 * @return InputfieldsWrapper
 	 *
 	 */
-	public static function getModuleConfigInputfields(array $data) {
+    public static function getModuleConfigInputfields(array $data) {
 
-		$data = array_merge(self::getDefaultData(), $data);
+        $data = array_merge(self::getDefaultData(), $data);
 
 		$wrapper = new InputFieldWrapper();
 
@@ -201,6 +217,23 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 		if(isset($data['redirectType'])) $redirectType->value = $data['redirectType'];
 
 		$wrapper->add($redirectType);
+
+
+        $f = wire('modules')->get("InputfieldCheckbox");
+        $f->attr('name+id', 'rewriteLinks');
+        $f->label = 'Rewrite Links';
+        $f->description = "Determines whether to rewrite all links to be ID only.";
+        $f->attr('checked', $data['rewriteLinks'] ? 'checked' : '' );
+        $wrapper->add($f);
+
+        $f = wire('modules')->get("InputfieldText");
+        $f->attr('name+id', 'rewriteFormat');
+        //$f->showIf = "rewriteLinks=1";
+        //$f->requiredIf = "rewriteLinks=1";
+        if($data['rewriteFormat']!='') $f->value = $data['rewriteFormat'];
+        $f->label = 'Rewrite Format';
+        $f->description = "Determines the format for rewriting links.\neg.\n".'/{$page->name}-{$page->id}/'."\nOR\n".'/{$page->id}/';
+        $wrapper->add($f);
 
 
 		$fieldEnabledTemplates = wire('modules')->get('InputfieldAsmSelect');
