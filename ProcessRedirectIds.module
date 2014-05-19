@@ -22,7 +22,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 24,
+			'version' => 25,
 			'autoload' => true,
 			'singular' => true
 		);
@@ -99,20 +99,8 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 		// don't even consider system templates
 		if($this->editedPage->template->flags & Template::flagSystem) return;
 
-
-		// hook only if
-		// 1) no templates or pages have been chosen (=all) OR
-		// 2) the template of the edited page has been chosen or the page or a parent page of the edited page has been chosen
-
-		if($this->editedPage->id != 1){
-			foreach(explode("|",$this->editedPage->parents) as $parent){
-				$parentEnabled = in_array($parent, $this->data['enabledPages']) ? true : false;
-			}
-
-			if((count($this->data['enabledTemplates']) == 0 || in_array($this->editedPage->template->name, $this->data['enabledTemplates'])) &&
-			(count($this->data['enabledPages']) == 0 || in_array($this->editedPage->id, $this->data['enabledPages'])) || $parentEnabled) {
-				$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'addShortURLLinks');
-			}
+        if($this->isAllowed($this->editedPage) && $this->editedPage->id != 1){
+			$this->addHookAfter('ProcessPageEdit::buildForm', $this, 'addShortURLLinks');
 		}
 	}
 
@@ -121,9 +109,12 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 
 		$page = $e->object;
 		if(!isset($this->id) || $page->id != $this->id){
-			if($page->id!=1 && $page->template != 'admin') {
-				$e->return = @eval('return "'.$this->data['rewriteFormat'].'";');
-			}
+
+            if($this->isAllowed($page)){
+    			if($page->id!=1 && $page->template != 'admin') {
+    				$e->return = @eval('return "'.$this->data['rewriteFormat'].'";');
+    			}
+            }
 		}
 	}
 
@@ -134,25 +125,14 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 
 			$p = $this->pages->get($this->id);
 
-			// if there is a page match, then proceed to check if templates and pages configuration allows the redirect
-			if($p->id && $p->id >= 1000 && $p->parent->id != 2 && $p->viewable()){
-
-				foreach(explode("|", $p->parents) as $parent){
-					$parentEnabled = in_array($parent, $this->data['enabledPages']) ? true : false;
+            if($this->isAllowed($p)){
+				//1005 is the id of the default PW site-map page. Something about the recursive function in there causing out of memory errors when using the "Load" option.
+				if($this->data['redirectType']=='Load' && $p->id != 1005){
+					header("HTTP/1.1 200 OK");
+					$event->return = str_replace("<head>", "<head>\n\n\t<link href='$p->httpUrl' rel='canonical' />", $p->render());
 				}
-
-				if((count($this->data['enabledTemplates']) == 0 || in_array($p->template->name, $this->data['enabledTemplates'])) &&
-				(count($this->data['enabledPages']) == 0 || in_array($p->id, $this->data['enabledPages'])) || $parentEnabled) {
-
-					//1005 is the id of the default PW site-map page. Something about the recursive function in there causing out of memory errors when using the "Load" option.
-					if($this->data['redirectType']=='Load' && $p->id != 1005){
-						header("HTTP/1.1 200 OK");
-						$event->return = str_replace("<head>", "<head>\n\n\t<link href='$p->httpUrl' rel='canonical' />", $p->render());
-					}
-					else{
-						$this->session->redirect($p->httpUrl);
-					}
-
+				else{
+					$this->session->redirect($p->httpUrl);
 				}
 			}
 		}
@@ -192,6 +172,24 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 		$form->append($refTab);
 
 	}
+
+
+    public function isAllowed($p){
+        if($p->id && $p->id >= 1000 && $p->parent->id != 2 && $p->viewable()){
+
+            foreach(explode("|", $p->parents) as $parent){
+                $parentEnabled = in_array($parent, $this->data['enabledPages']) ? true : false;
+            }
+
+            if((count($this->data['enabledTemplates']) == 0 || in_array($p->template->name, $this->data['enabledTemplates'])) &&
+            (count($this->data['enabledPages']) == 0 || in_array($p->id, $this->data['enabledPages'])) || $parentEnabled) {
+                return true;
+            }
+            else{
+                return false;
+            }
+        }
+    }
 
 
 	/**
