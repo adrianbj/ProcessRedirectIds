@@ -22,9 +22,10 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 25,
+			'version' => 26,
 			'autoload' => true,
-			'singular' => true
+			'singular' => true,
+            'icon'     => 'arrow-circle-right'
 		);
 	}
 
