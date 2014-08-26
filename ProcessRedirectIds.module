@@ -22,7 +22,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://processwire.com/talk/topic/4611-redirect-id-based-urls/',
-			'version' => 26,
+			'version' => 27,
 			'autoload' => true,
 			'singular' => true,
             'icon'     => 'arrow-circle-right'
@@ -221,7 +221,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
         $f = wire('modules')->get("InputfieldCheckbox");
         $f->attr('name+id', 'rewriteLinks');
         $f->label = 'Rewrite Links';
-        $f->description = "Determines whether to rewrite all links to be ID only.";
+        $f->description = "Determines whether to rewrite all links to include the page ID - based on the format defined below.";
         $f->attr('checked', $data['rewriteLinks'] ? 'checked' : '' );
         $wrapper->add($f);
 
@@ -229,7 +229,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
         $f->attr('name+id', 'rewriteFormat');
         //$f->showIf = "rewriteLinks=1";
         //$f->requiredIf = "rewriteLinks=1";
-        if($data['rewriteFormat']!='') $f->value = $data['rewriteFormat'];
+        if(isset($data['rewriteFormat']) && $data['rewriteFormat']!='') $f->value = $data['rewriteFormat'];
         $f->label = 'Rewrite Format';
         $f->description = "Determines the format for rewriting links.\neg.\n".'/{$page->name}-{$page->id}/'."\nOR\n".'/{$page->id}/';
         $wrapper->add($f);
