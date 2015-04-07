@@ -22,7 +22,7 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
 			'title' => 'Redirect ID based URLs',
 			'summary' => 'Redirects ID based URL to full SEO friendly URL',
 			'href' => 'http://modules.processwire.com/modules/process-redirect-ids/',
-			'version' => 28,
+			'version' => 29,
 			'autoload' => true,
 			'singular' => true,
             'icon'     => 'arrow-circle-right'
@@ -44,9 +44,11 @@ class ProcessRedirectIds extends WireData implements Module, ConfigurableModule 
     static public function getDefaultData() {
             return array(
                 "redirectType" => "Redirect",
-                "enabledFields" => "",
-                "enabledTemplates" => "",
-                "rewriteLinks" => ""
+                "enabledFields" => array(),
+                "enabledPages" => array(),
+                "enabledTemplates" => array(),
+                "rewriteLinks" => "",
+                "rewriteFormat" => ""
             );
     }
 
