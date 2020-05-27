@@ -1,5 +1,4 @@
-ProcessRedirectIds
-==================
+# ProcessRedirectIds
 
 Processwire module for redirecting ID based URL to full SEO friendly URL
 
@@ -25,7 +24,7 @@ Any of those will redirect to the proper URL, eg: http://www.mysite.com/this-is-
 
 There is a config option to simply load the content to the ID based URL, rather than redirecting to the original PW url if you prefer.
 
-##Forum:
+## Forum:
 http://processwire.com/talk/topic/4611-redirect-id-based-urls/
 
 
